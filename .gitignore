@@ -94,3 +94,5 @@ ENV/
 .idea/
 T9WebApp.iml
 ubuntu-aws.pem
+apvirt/
+database/config.properties
