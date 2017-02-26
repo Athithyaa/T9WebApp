@@ -46,7 +46,11 @@ def getreviews():
     if 'email' not in session:
         return render_template('forms/login.html', form=LoginForm())
     rSchema = ReviewSchema()
-    return rSchema.dumps(Review.query.all()).data
+    reviews = Review.query.all()
+    rJson = []
+    for r in reviews:
+        rJson.append(rSchema.dumps(r).data)
+    return rJson
 
 
 @app.route('/postreview', methods=['GET', 'POST'])
