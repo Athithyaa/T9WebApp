@@ -1,23 +1,39 @@
 jQuery(document).ready(function($){
+    var done = [];
 
-    $.ajax({
-        url: '/getreviews',
-        type: 'GET',
-        dataType: 'json',
+    if($("#CompanyName").length != 0) {
+        var cName = $("#CompanyName").text();
+        $.ajax({
+            type: "POST",
+            url: "/companyPage",
+            // The key needs to match your method's input parameter (case-sensitive).
+            data: {"company": cName},
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (data) {
+                alert(data);
+            },
+            failure: function (errMsg) {
+                alert(errMsg);
+            }
+        });
+    }
 
-        success: function (data) {
-            console.log(data);
-            if(!jQuery.isEmptyObject(data)) {
-                data.map((d) => {
+
+    $.get("/getreviews", function (data,resp) {
+            var reviews = data.results;
+            if(!jQuery.isEmptyObject(reviews)) {
+                reviews.map((d) => {
                     var review = d["content"];
-                    var company = d["company_id"];
+                    var company = d["companyname"];
                     var date = d["date"];
                     var timeLineContent = "<div class=\"cd-timeline-block\"> <div class=\"cd-timeline-img\"> " +
                         "<img src=\"/static/img/cd-icon-picture.svg\" alt=\"Picture\"> </div> <div class=\"cd-timeline-content\"> " +
-                        "<h2>" + company + "</h2> <p>" + review + "</p> <a href=\"#0\" class=\"cd-read-more\">Read more</a> " +
+                        "<h2> <a href=\"/company?name=" + company + "\" > " +  company  + "</a> </h2> <p>" + review + "</p> " +
                         "<span class=\"cd-date\"> " + date +"</span> </div> </div>";
-                    $("#cd-timeline").append("");
-            });
+                    $("#cd-timeline").append(timeLineContent);
+
+            })
             }
 
             var timelineBlocks = $('.cd-timeline-block'),
@@ -25,7 +41,6 @@ jQuery(document).ready(function($){
 
             //hide timeline blocks which are outside the viewport
             hideBlocks(timelineBlocks, offset);
-
             //on scolling, show/animate timeline blocks when enter the viewport
             $(window).on('scroll', function(){
                 (!window.requestAnimationFrame)
@@ -46,5 +61,5 @@ jQuery(document).ready(function($){
             }
         }
 
-    });
+    );
 });

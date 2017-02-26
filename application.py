@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 from datetime import timedelta
 import uuid
 from database.db import db_session, init_db
@@ -43,16 +43,24 @@ def home():
     return render_template('pages/placeholder.home.html')
 
 
+@app.route("/company", methods=['POST', 'GET'])
+def company():
+    cName = request.args.get("name")
+    return render_template('pages/placeholder.company.html', cName=cName)
+
+
 @app.route('/getreviews', methods=['GET'])
 def getreviews():
     if 'email' not in session:
         return render_template('forms/login.html', form=LoginForm())
     rSchema = ReviewSchema()
-    reviews = Review.query.all()
+    reviews = Review.query.order_by(Review.date.desc())
     rJson = []
     for r in reviews:
-        rJson.append(rSchema.dumps(r).data)
-    return rJson
+        res = rSchema.dump(r).data
+        res['companyname'] = r.company.name
+        rJson.append(res)
+    return jsonify({"count": len(rJson), "results": rJson})
 
 
 @app.route('/postreview', methods=['GET', 'POST'])
@@ -131,6 +139,7 @@ def updateCompany(id, name, count):
     comJson['name'] = str(name)
     comJson['r_cnt'] = count
     return comJson
+
 
 @app.route('/analytics')
 def analytics():
