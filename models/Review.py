@@ -5,13 +5,13 @@ from sqlalchemy.orm import relationship
 
 
 class Review(Base):
-    __tablename__ = 'Reviews'
+    __tablename__ = 'Review'
     id = Column(String, primary_key=True)
     user_id = Column(String(100), ForeignKey("User.id"), nullable=False)
     company_id = Column(String(100), ForeignKey("Company.id"), nullable=False)
     content = Column(String(100))
-    user = relationship("User", ForeignKey("User.id"))
-    company = relationship("Company", ForeignKey("Company.id"))
+    user = relationship("User", foreign_keys="Review.user_id")
+    company = relationship("Company", foreign_keys="Review.company_id")
 
     def __repr__(self):
         return "<Review:" + self.id + " " + self.content + ">"

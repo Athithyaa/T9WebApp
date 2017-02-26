@@ -1,7 +1,11 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
+import uuid
 from database.db import db_session, init_db
-import logging
-from logging import Formatter, FileHandler
+from flask_login import LoginManager,login_required,login_user,logout_user
+from models.Company import Company
+from models.User import User
+from models.Review import Review
+from ma_schema.UserSchema import UserSchema
 from forms import *
 import os
 import json
@@ -18,6 +22,9 @@ WATSON_USERNAME = '1be2c698-56e7-47d4-9944-6e4d81c9b07d',
 WATSON_PASSWORD = 'sPr4XOsPtNSX'
 ALCHEMY_API_KEY = '07551e54797d7b593f3595653a7cad5b1803d3a6'
 app = Flask(__name__)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view='login'
 app.secret_key = 's3cr3t'
 
 
@@ -83,22 +90,42 @@ def analytics():
     return render_template('pages/placeholder.home.html')
 
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm(request.form)
-    return render_template('forms/login.html', form=form)
+    if request.method == 'POST':
+        u = {}
+        uSchema = UserSchema()
+        username = request.form['name']
+        password = request.form['password']
+        u['id'] = ""
+        u['name'] = username
+        u['password'] = password
+        user = uSchema.load(u, session=db_session).data
+        login_user(user)
+        return redirect(request.args.get("next"))
+    else:
+        form = LoginForm(request.form)
+        return render_template('forms/login.html', form=form)
 
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegisterForm(request.form)
-    return render_template('forms/register.html', form=form)
+    if request.method == 'POST':
+        u = {}
+        uSchema = UserSchema()
+        username = request.form['name']
+        password = request.form['password']
+        u['id'] = str(uuid.uuid4())
+        u['name'] = username
+        u['password'] = password
+        user = uSchema.load(u, session=db_session).data
+        db_session.add(user)
+        db_session.commit()
+        return render_template('pages/placeholder.home.html')
+    else:
+        form = RegisterForm(request.form)
+        return render_template('forms/register.html', form=form)
 
-
-@app.route('/forgot')
-def forgot():
-    form = ForgotForm(request.form)
-    return render_template('forms/forgot.html', form=form)
 
 # Error handlers.
 

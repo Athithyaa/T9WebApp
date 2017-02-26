@@ -1,3 +1,4 @@
+Fabric==1.8.2
 Flask==0.10.1
 Flask-SQLAlchemy==1.0
 Flask-WTF==0.9.4
@@ -17,3 +18,4 @@ psycopg2==2.6.2
 marshmallow-sqlalchemy
 flask-marshmallow
 watson-developer-cloud
+flask-login
