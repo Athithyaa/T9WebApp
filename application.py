@@ -13,6 +13,7 @@ from watson_developer_cloud import AlchemyLanguageV1
 from ma_schema.AnalyticsSchema import AnalyticsSchema
 from ma_schema.UserSchema import UserSchema
 from ma_schema import CompanySchema
+from ma_schema.ReviewSchema import ReviewSchema
 
 import uuid
 from models.Analytics import Analytics
@@ -37,15 +38,19 @@ def shutdown_session(exception=None):
 
 @app.route('/')
 def home():
-    aSchema = AnalyticsSchema()
-    over = Analytics.query.all()
-    print over
     return render_template('pages/placeholder.home.html')
+
+
+@app.route('/getreviews', methods=['GET'])
+def getreviews():
+    rSchema = ReviewSchema()
+    return rSchema.dumps(Review.query.all()).data
 
 
 @app.route('/postreview', methods=['GET', 'POST'])
 def postreview():
     return render_template('pages/placeholder.post.html', form=PostReviewForm())
+
 
 @app.route('/analytics')
 def analytics():
@@ -225,7 +230,7 @@ def register():
 
 @app.errorhandler(500)
 def internal_error(error):
-    #db_session.rollback()
+    db_session.rollback()
     return render_template('errors/500.html'), 500
 
 
