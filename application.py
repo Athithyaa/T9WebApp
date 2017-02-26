@@ -12,7 +12,7 @@ from watson_developer_cloud import AlchemyLanguageV1
 
 from ma_schema.AnalyticsSchema import AnalyticsSchema
 from ma_schema.UserSchema import UserSchema
-from ma_schema import CompanySchema
+from ma_schema.CompanySchema import CompanySchema
 
 import uuid
 from models.Analytics import Analytics
@@ -37,54 +37,57 @@ def shutdown_session(exception=None):
 
 @app.route('/')
 def home():
-    aSchema = AnalyticsSchema()
-    over = Analytics.query.all()
-    print over
     return render_template('pages/placeholder.home.html')
 
 
 @app.route('/postreview', methods=['GET', 'POST'])
 def postreview():
+    if request.method == 'POST':
+        company_name = request.form['company']
+        content = request.form['experience']
+        aSchema = AnalyticsSchema()
+        cSchema = CompanySchema()
+        #sentJson = reqData['review']
+
+        id = ""
+        if not getCompany(company_name):
+            print "compnay not found, creating.."
+            cJson = constructCompany(company_name.lower())
+            com = cSchema.load(cJson, session=db_session).data
+            id = com.id
+            db_session.add(com)
+            db_session.commit()
+            review_count = 1
+            sentJson = constructNewAnalytics(id, content)
+
+        else:
+            print "company found"
+            com = getReviewCountForCompany(company_name.lower())
+            id = com['id']
+            count =com['r_cnt']  ## update count for company
+
+            existing_ana = getExistingAnalyticsForCompany(str(id))
+            sentJson = constructRunningAnalytics(existing_ana, count, content)
+            count +=1
+
+
+        #print sentJson
+        sentJson['id'] = existing_ana['id']
+        ana = aSchema.load(sentJson, session=db_session).data
+        ana.company_id = id
+        db_session.merge(ana)
+        db_session.commit()
+
     return render_template('pages/placeholder.post.html', form=PostReviewForm())
 
 @app.route('/analytics')
 def analytics():
-
-    aSchema = AnalyticsSchema()
-    cSchema = CompanySchema()
-    #sentJson = reqData['review']
-
-    content = "Facebook, you suck!"
-    company_name = "twitter"
-
-    if getCompany(company_name) == "None":
-        cJson = constructCompany(company_name)
-        com = cSchema.load(cJson, session=db_session).data
-        id = com['id']
-        db_session.add(com)
-        db_session.commit()
-        review_count = 1
-        sentJson = constructNewAnalytics(id, content)
-    else:
-        com = getReviewCountForCompany(company_name)
-        id = com['id']
-        count =com['r_cnt']
-
-        existing_ana = getExistingAnalyticsForCompany(id)
-        sentJson = constructRunningAnalytics(existing_ana, count, content)
-
-
-    #print sentJson
-    ana = aSchema.load(sentJson, session=db_session).data
-    db_session.merge(ana)
-    db_session.commit()
-
     return render_template('pages/placeholder.home.html')
 
 
 def getExistingAnalyticsForCompany(company_id):
     aSchema = AnalyticsSchema()
-    ana = Analytics.query.filter_by(id=company_id).first()
+    ana = Analytics.query.filter_by(company_id=company_id).first()
     aJson = aSchema.dump(obj=ana).data
     return aJson
 
@@ -95,7 +98,7 @@ def getCompany(company_name):
         cJson = cSchema.dump(obj=comp).data
         return cJson
     else:
-        return "NotFound"
+        return None
 
 def constructRunningAnalytics(existing_ana, current_review_count, content):
 
@@ -109,12 +112,16 @@ def constructRunningAnalytics(existing_ana, current_review_count, content):
 
     alchemy_language = AlchemyLanguageV1(api_key='07551e54797d7b593f3595653a7cad5b1803d3a6')
     sentiment = alchemy_language.sentiment(text=content)
-
-    sentJson['sentiment_score'] = computeRunningAverage( existing_ana['sentiment_score'],sentiment['docSentiment']['score'], current_review_count)
+    sentiment_type = sentiment['docSentiment']['type']
+    if "neutral" in sentiment_type:
+        sentiment_score = 0
+    sentJson['sentiment_score'] = computeRunningAverage(existing_ana['sentiment_score'], sentiment_score, current_review_count)
     if sentJson['sentiment_score'] > 0:
         sentJson['sentiment_type'] = "positive"
-    else:
+    elif sentJson['sentiment_score'] < 0:
         sentJson['sentiment_type'] = "negative"
+    else:
+        sentJson['sentiment_type'] = "nuetral"
 
 
     sentimentData = tone_analyzer.tone(text=content)
@@ -186,6 +193,7 @@ def constructCompany(company_name):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    form = LoginForm(request.form)
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -195,7 +203,7 @@ def login():
         else:
             return render_template('forms/login.html', form=form)
     else:
-        form = LoginForm(request.form)
+
         return render_template('forms/login.html', form=form)
 
 
