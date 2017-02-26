@@ -9,6 +9,9 @@ class RegisterForm(Form):
     name = TextField(
         'Username', validators=[DataRequired(), Length(min=6, max=25)]
     )
+    email = TextField(
+        'Email', validators=[DataRequired(), Length(min=6, max=40)]
+    )
     password = PasswordField(
         'Password', validators=[DataRequired(), Length(min=6, max=40)]
     )
@@ -20,11 +23,16 @@ class RegisterForm(Form):
 
 
 class LoginForm(Form):
-    name = TextField('Username', [DataRequired()])
+    email = TextField(
+        'Email', validators=[DataRequired(), Length(min=6, max=40)]
+    )
     password = PasswordField('Password', [DataRequired()])
 
 
-class ForgotForm(Form):
-    email = TextField(
-        'Email', validators=[DataRequired(), Length(min=6, max=40)]
+class PostReviewForm(Form):
+    company = TextField(
+        'CompanyName', validators=[DataRequired(), Length(min=1, max=100)]
+    )
+    experience = TextField(
+        'Experience', validators=(DataRequired(),Length(min=100, max=3000))
     )

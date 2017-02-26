@@ -16,4 +16,3 @@ wsgiref=
 psycopg2
 marshmallow-sqlalchemy
 flask-marshmallow
-flask-login
