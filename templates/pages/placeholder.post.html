@@ -21,9 +21,14 @@
 
 <form method="post" action="/postreview" class="form">
     <label>Company Name:</label>
+    <br/>
+    <br/>
     {{ form.company(class_ = 'form-control', placeholder = form.company.label.text, required = true, autofocus=true) }}
     <br/>
+    <br/>
     <label>Experience:</label>
+    <br/>
+    <br/>
     {{ form.experience(cols="35",rows="20",class_ = 'form-control last-input', placeholder = form.experience.label.text, required = true) }}
     <br/>
     <input type="submit" value="Submit" class="btn btn-default">

@@ -45,6 +45,11 @@ def home():
     return render_template('pages/placeholder.home.html')
 
 
+@app.route("/logout",methods=['GET','POST'])
+def logout():
+    session.clear()
+    return render_template('forms/login.html', form=LoginForm())
+
 @app.route("/company", methods=['POST', 'GET'])
 def company():
     cName = request.args.get("name")

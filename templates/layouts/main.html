@@ -76,6 +76,11 @@
             <li><a href="{{ url_for('register') }}">Signup</a></li>
             <li><a href="{{ url_for('login') }}">Login</a></li>
           </ul>
+          {% else %}
+          <ul class="nav navbar-nav pull-right">
+            <li><a href="#">{{session.email}}</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+          </ul>
            {% endif %}
         </div><!--/.nav-collapse -->
       </div>

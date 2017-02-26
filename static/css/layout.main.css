@@ -16,6 +16,7 @@ body {
   margin: 0 auto -60px;
   /* Pad bottom by footer height */
   padding: 0 0 60px;
+  background-color: #e6e6fa;
 }
 
 /* Set the fixed height of the footer here */
@@ -31,6 +32,7 @@ body {
 
 #wrap > .container {
   padding: 60px 15px 0;
+  background: #e6e6fa;
 }
 .container .credit {
   margin: 20px 0;
