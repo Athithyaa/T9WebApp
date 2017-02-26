@@ -9,7 +9,7 @@ class Review(Base):
     id = Column(String, primary_key=True)
     user_id = Column(String(100), ForeignKey("User.id"), nullable=False)
     company_id = Column(String(100), ForeignKey("Company.id"), nullable=False)
-    content = Column(String(100))
+    content = Column(String(20000))
     user = relationship("User", foreign_keys="Review.user_id")
     company = relationship("Company", foreign_keys="Review.company_id")
     date = Column(String(100))

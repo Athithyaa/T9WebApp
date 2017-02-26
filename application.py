@@ -69,7 +69,6 @@ def getreviews():
         rJson.append(res)
     return jsonify({"count": len(rJson), "results": rJson})
 
-@app.route('/getnews')
 def getnews():
 
     company = "uber"
@@ -82,28 +81,31 @@ def getnews():
     params = urllib.urlencode({
         # Request parameters
         'q': search_parameter,
-        'count': '10',
+        'count': '5',
         'offset': '0',
         'mkt': 'en-us',
         'safeSearch': 'Off',
     })
 
     try:
+        name = []
+        desc = []
+        url = []
         conn = httplib.HTTPSConnection('api.cognitive.microsoft.com')
         conn.request("GET", "/bing/v5.0/news/search?%s" % params, "{body}", headers)
         response = conn.getresponse()
         data = json.loads(response.read())
         for i in range(len(data)):
-            name = str(data['value'][0]['name'])
-            desc = str(data['value'][0]['description'])
-            url = str(data['value'][0]['url'])
-        return data
+            name.append(str(data['value'][0]['name']))
+            desc.append(str(data['value'][0]['description']))
+            url.append(str(data['value'][0]['url']))
+        return {'name': name, 'desc': desc, 'url':url}
 
         conn.close()
 
     except Exception as e:
         print("[Errno {0}] {1}".format(e.errno, e.strerror))
-        return "fail"
+        return {'Error': 'Could not fetch any news!'}
 
 
 @app.route('/postreview', methods=['GET', 'POST'])
@@ -112,7 +114,7 @@ def postreview():
         return render_template('forms/login.html', form=LoginForm())
 
     if request.method == 'POST':
-        company_name = request.form['company']
+        company_name = request.form['company'].lower()
         content = request.form['experience']
         aSchema = AnalyticsSchema()
         cSchema = CompanySchema()
@@ -128,7 +130,6 @@ def postreview():
             com = cSchema.load(cJson, session=db_session).data
             id = com.id
             db_session.add(com)
-            db_session.commit()
             review_count = 1
             sentJson = constructNewAnalytics(id, content)
 
@@ -140,12 +141,11 @@ def postreview():
             name = comJson['name']
             existing_ana = getExistingAnalyticsForCompany(str(id))
             sentJson = constructRunningAnalytics(existing_ana, count, content)
-            sentJson['id'] = existing_ana['id']
+            sentJson['id'] = str(existing_ana['id'])
             count +=1
             cJson = updateCompany(id, name, count)
             com = cSchema.load(cJson, session=db_session).data
             db_session.merge(com)
-            db_session.commit()
 
 
         rJson = constructReview(email,id, content)
@@ -170,7 +170,7 @@ def constructReview(email,company_id, content):
     user = User.query.filter_by(email=email).first()
     rJson['user_id'] = str(user.id)
     rJson['company_id'] = str(company_id)
-    rJson['content'] = content
+    rJson['content'] = str(content)
     rJson[u'id'] = str(uuid.uuid4())
     return rJson
 
@@ -198,6 +198,7 @@ def companyPage():
         social_tone = buildSocialDict(aJson)
         sentiment_score = aJson['sentiment_score']
         sentiment_type = aJson['sentiment_type']
+        #news_feed_data = getnews(company_name)
 
         return jsonify({
             'emotional': emotional_tone,
@@ -307,10 +308,20 @@ def constructNewAnalytics(id, content):
 
     sentJson['id'] = str(uuid.uuid1())
     sentJson['company_id'] = id
+
+    sentJson['sentiment_score'] = 0
+    sentJson['sentiment_type'] = "neutral"
+
     sentJson['sentiment_score'] = sentiment['docSentiment']['score']
     sentJson['sentiment_type'] = sentiment['docSentiment']['type']
 
     sentimentData = tone_analyzer.tone(text=content)
+
+    sentJson['anger'] = 0
+    sentJson['disgust'] =0
+    sentJson['fear'] =0
+    sentJson['joy'] = 0
+    sentJson['sadness'] = 0
 
     sentJson['anger'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][0]["score"]
     sentJson['disgust'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][1]["score"]
@@ -318,11 +329,18 @@ def constructNewAnalytics(id, content):
     sentJson['joy'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][3]["score"]
     sentJson['sadness'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][4]["score"]
 
+    sentJson['openness'] = 0
+    sentJson['conscientiousness'] =0
+    sentJson['extraversion'] =0
+    sentJson['aggreablesness'] = 0
+    sentJson['neuroticism'] = 0
+
     sentJson['openness'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][0]["score"]
     sentJson['conscientiousness'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][1]["score"]
     sentJson['extraversion'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][2]["score"]
     sentJson['aggreablesness'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][3]["score"]
     sentJson['neuroticism'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][4]["score"]
+
     return sentJson
 
 def getReviewCountForCompany(company_name):
