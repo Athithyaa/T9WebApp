@@ -55,6 +55,7 @@ def getreviews():
 def postreview():
     if 'email' not in session:
         return render_template('forms/login.html', form=LoginForm())
+
     if request.method == 'POST':
         company_name = request.form['company']
         content = request.form['experience']
@@ -62,6 +63,7 @@ def postreview():
         cSchema = CompanySchema()
         rSchema = ReviewSchema()
 
+        email = session['email']
         #sentJson = reqData['review']
 
         id = ""
@@ -90,7 +92,11 @@ def postreview():
             db_session.commit()
 
 
-
+        rJson = constructReview(email,id, content)
+        rev = rSchema.load(rJson, session=db_session).data
+        rev.company_id = rJson['company_id']
+        rev.user_id = rJson['user_id']
+        db_session.add(rev)
 
         #print sentJson
         sentJson['id'] = existing_ana['id']
@@ -100,6 +106,17 @@ def postreview():
         db_session.commit()
 
     return render_template('pages/placeholder.post.html', form=PostReviewForm())
+
+
+def constructReview(email,company_id, content):
+    rJson = {}
+    user = User.query.filter_by(email=email).first()
+    rJson['user_id'] = str(user.id)
+    rJson['company_id'] = str(company_id)
+    rJson['content'] = content
+    rJson[u'id'] = str(uuid.uuid4())
+    return rJson
+
 
 
 def updateCompany(id, name, count):
@@ -146,6 +163,9 @@ def constructRunningAnalytics(existing_ana, current_review_count, content):
     sentiment_type = sentiment['docSentiment']['type']
     if "neutral" in sentiment_type:
         sentiment_score = 0
+    else:
+        sentiment_score = float((sentiment['docSentiment']['score']))
+
     sentJson['sentiment_score'] = computeRunningAverage(existing_ana['sentiment_score'], sentiment_score, current_review_count)
     if sentJson['sentiment_score'] > 0:
         sentJson['sentiment_type'] = "positive"

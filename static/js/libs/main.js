@@ -6,7 +6,7 @@ jQuery(document).ready(function($){
         dataType: 'json',
 
         success: function (data) {
-
+            console.log(data);
             if(!jQuery.isEmptyObject(data)) {
                 data.map((d) => {
                     var review = d["content"];
