@@ -1,0 +1,29 @@
+{% extends 'layouts/main.html' %}
+{% block title %}post{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>Post your experience here</h1>
+</div>
+
+<div class="container">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-warning fade in">
+                <a class="close" data-dismiss="alert">&times;</a>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+
+<form method="post" action="/postreview" class="form">
+    {{ form.company(class_ = 'form-control', placeholder = form.company.label.text, required = true, autofocus=true) }}
+    {{ form.experience(class_ = 'form-control last-input', placeholder = form.experience.label.text, required = true) }}
+    <input type="submit" value="Submit" class="btn btn-primary btn-lg btn-block">
+</form>
+
+
+{% endblock %}
