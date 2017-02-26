@@ -12,41 +12,28 @@ jQuery(document).ready(function($){
             dataType: "json",
             success: function (data) {
                 console.log(data);
-                function exampleData() {
-                    return  [
-                        {
-                            "label": "One",
-                            "value" : 29.765957771107
-                        } ,
-                        {
-                            "label": "Two",
-                            "value" : 0
-                        } ,
-                        {
-                            "label": "Three",
-                            "value" : 32.807804682612
-                        } ,
-                        {
-                            "label": "Four",
-                            "value" : 196.45946739256
-                        } ,
-                        {
-                            "label": "Five",
-                            "value" : 0.19434030906893
-                        } ,
-                        {
-                            "label": "Six",
-                            "value" : 98.079782601442
-                        } ,
-                        {
-                            "label": "Seven",
-                            "value" : 13.925743130903
-                        } ,
-                        {
-                            "label": "Eight",
-                            "value" : 5.1387322875705
-                        }
-                    ];
+                var emot = data["emotional"];
+                var social = data["social"];
+                function EmotData() {
+                    var dataJson = [];
+                    for(var k in emot){
+                        var d = {};
+                        d["label"] = k;
+                        d["value"] = emot[k];
+                        dataJson.push(d);
+                    }
+                    return dataJson;
+                }
+
+                function SocData() {
+                    var dataJson = [];
+                    for(var k in social){
+                        var d = {};
+                        d["label"] = k;
+                        d["value"] = social[k];
+                        dataJson.push(d);
+                    }
+                    return dataJson;
                 }
 
 
@@ -56,13 +43,75 @@ jQuery(document).ready(function($){
                         .y(function(d) { return d.value })
                         .showLabels(true);
 
-                    d3.select("#chart svg")
-                        .datum(exampleData())
+                    d3.select("#viz1")
+                        .datum(EmotData())
+                        .style("width","450px")
+                        .style("height","450px")
+                        .style("float","left")
+                        .style("margin-top","20px")
                         .transition().duration(350)
                         .call(chart);
 
                     return chart;
                 });
+
+                nv.addGraph(function() {
+                    var chart = nv.models.pieChart()
+                        .x(function(d) { return d.label })
+                        .y(function(d) { return d.value })
+                        .showLabels(true);
+
+                    d3.select("#viz2")
+                        .datum(SocData())
+                        .style("width","450px")
+                        .style("height","450px")
+                        .style("float","left")
+                        .style("margin-left","140px")
+                        .style("margin-top","20px")
+                        .transition().duration(350)
+                        .call(chart);
+
+                    return chart;
+                });
+
+                var toolTipDiv = d3.select("#viz")
+                    .append("div")
+                    .attr("class", "tooltip");
+
+                var circle = d3.select("#viz3")
+                    .append("circle")
+                    .attr("cx", 30)
+                    .attr("cy", 30)
+                    .attr("r", data["sentiment_score"]*20);
+
+                if(data["sentiment_type"] == "positive"){
+                    circle.style("fill","green")
+                        .on("mouseover", function (d) {
+                            d3.select(this)
+                                .attr("r", data["sentiment_score"]*20)
+                                .style("fill", "green");
+                            toolTipDiv.transition()
+                                .duration(2000)
+                                .style("opacity", 0.9)
+                                .style("left", (d3.event.pageX ) + "px")
+                                .style("top", (d3.event.pageY ) + "px");
+
+                            toolTipDiv.html("<p>(Sentiment: " + data["sentiment_type"] + ", " + (data["sentiment_score"]*100) + "% )</p>");
+                        })
+                        .on("mouseout", function (d) {
+                            d3.select(this)
+                                .attr("r", data["sentiment_score"]*21)
+                                .style("fill", "green");
+                            toolTipDiv.transition()
+                                .duration(2000)
+                                .style("opacity", 0);
+                        })
+
+                }else{
+                    circle.style("fill","red")
+
+                }
+
             },
             failure: function (errMsg) {
                 console.log(errMsg);

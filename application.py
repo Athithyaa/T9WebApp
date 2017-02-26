@@ -186,8 +186,6 @@ def companyPage():
         request_ans = request.get_data()
 
         company_name = request_ans.split("+")[1]
-
-
         cJson = getCompany(company_name)
         comp_id = str(cJson['id'])
         aJson = getExistingAnalyticsForCompany(comp_id)

@@ -3,15 +3,21 @@
 {% block content %}
 
 <div class="page-header">
-    <h1>Statistics</h1>
+    <h2>Emotional, Social and Sentiment Scores</h2>
 </div>
 
 <div>
-<h1 id="CompanyName"> {{ cName }}</h1>
+<h3 id="CompanyName"> {{ cName }}</h3>
 </div>
 
 <div id="viz">
-    <svg></svg>
+    <svg id="viz1"></svg>
+    <svg id="viz2"></svg>
+</div>
+
+<div style="float: left">
+    <h3> Sentiment </h3>
+    <svg id="viz3"></svg>
 </div>
 
 {% endblock %}
