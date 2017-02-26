@@ -13,6 +13,7 @@ from watson_developer_cloud import AlchemyLanguageV1
 from ma_schema.AnalyticsSchema import AnalyticsSchema
 from ma_schema.UserSchema import UserSchema
 from ma_schema.CompanySchema import CompanySchema
+from ma_schema.ReviewSchema import ReviewSchema
 
 import uuid
 from models.Analytics import Analytics
@@ -45,8 +46,11 @@ def postreview():
     if request.method == 'POST':
         company_name = request.form['company']
         content = request.form['experience']
+
         aSchema = AnalyticsSchema()
         cSchema = CompanySchema()
+        rSchema = ReviewSchema()
+
         #sentJson = reqData['review']
 
         id = ""
@@ -62,23 +66,41 @@ def postreview():
 
         else:
             print "company found"
-            com = getReviewCountForCompany(company_name.lower())
-            id = com['id']
-            count =com['r_cnt']  ## update count for company
-
+            comJson = getReviewCountForCompany(company_name.lower())
+            id = comJson['id']
+            count =comJson['r_cnt']
+            name = comJson['name']
             existing_ana = getExistingAnalyticsForCompany(str(id))
             sentJson = constructRunningAnalytics(existing_ana, count, content)
             count +=1
+            cJson = updateCompany(id, name, count)
+            com = cSchema.load(cJson, session=db_session).data
+            db_session.merge(com)
+            db_session.commit()
+
+
 
 
         #print sentJson
         sentJson['id'] = existing_ana['id']
         ana = aSchema.load(sentJson, session=db_session).data
         ana.company_id = id
+
+
         db_session.merge(ana)
         db_session.commit()
 
+
+
     return render_template('pages/placeholder.post.html', form=PostReviewForm())
+
+
+def updateCompany(id, name, count):
+    comJson = {}
+    comJson[u'id'] = str(id)
+    comJson['name'] = str(name)
+    comJson['r_cnt'] = count
+    return comJson
 
 @app.route('/analytics')
 def analytics():
