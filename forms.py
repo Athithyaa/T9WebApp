@@ -1,6 +1,7 @@
 from flask_wtf import Form
-from wtforms import TextField, PasswordField
+from wtforms import TextField, PasswordField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, Length
+
 
 # Set your classes here.
 
@@ -33,6 +34,6 @@ class PostReviewForm(Form):
     company = TextField(
         'CompanyName', validators=[DataRequired(), Length(min=1, max=100)]
     )
-    experience = TextField(
+    experience = TextAreaField(
         'Experience', validators=(DataRequired(),Length(min=100, max=3000))
     )
