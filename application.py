@@ -36,17 +36,23 @@ def shutdown_session(exception=None):
 
 @app.route('/')
 def home():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
     return render_template('pages/placeholder.home.html')
 
 
 @app.route('/getreviews', methods=['GET'])
 def getreviews():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
     rSchema = ReviewSchema()
     return rSchema.dumps(Review.query.all()).data
 
 
 @app.route('/postreview', methods=['GET', 'POST'])
 def postreview():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
     if request.method == 'POST':
         company_name = request.form['company']
         content = request.form['experience']
@@ -85,6 +91,8 @@ def postreview():
 
 @app.route('/analytics')
 def analytics():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
     return render_template('pages/placeholder.home.html')
 
 
@@ -106,7 +114,6 @@ def getCompany(company_name):
 
 
 def constructRunningAnalytics(existing_ana, current_review_count, content):
-
     sentJson = {}
     tone_analyzer = ToneAnalyzerV3(
         username='1be2c698-56e7-47d4-9944-6e4d81c9b07d',
@@ -205,12 +212,14 @@ def login():
         email = request.form['email']
         password = request.form['password']
         lgn = User.query.filter_by(email=email.lower()).first()
+        if lgn is None:
+            return render_template('forms/login.html', form=form)
         if lgn.password == password:
+            session["email"] = email
             return render_template('pages/placeholder.home.html')
         else:
             return render_template('forms/login.html', form=form)
     else:
-
         return render_template('forms/login.html', form=form)
 
 
@@ -229,6 +238,7 @@ def register():
         user = uSchema.load(u, session=db_session).data
         db_session.add(user)
         db_session.commit()
+        session["email"] = email
         return render_template('pages/placeholder.home.html')
     else:
         form = RegisterForm(request.form)
