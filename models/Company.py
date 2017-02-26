@@ -9,6 +9,7 @@ class Company(Base):
     name = Column(String(100))
     r_cnt = Column(Integer)
     reviews = relationship("Review", primaryjoin="Company.id==Review.company_id")
+    analytics =relationship("Analytics", primaryjoin="Company.id==Analytics.company_id")
 
     def __repr__(self):
         return "<Company:" + self.id + " " + self.name + ">"

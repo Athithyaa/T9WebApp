@@ -13,7 +13,8 @@ from watson_developer_cloud import ToneAnalyzerV3
 from watson_developer_cloud import AlchemyLanguageV1
 import requests
 from ma_schema.AnalyticsSchema import AnalyticsSchema
-from ma_schema.UserSchema import UserSchema
+#from ma_schema.UserSchema import UserSchema
+from ma_schema import CompanySchema
 
 import uuid
 from models.Analytics import Analytics
@@ -37,7 +38,6 @@ def shutdown_session(exception=None):
 def home():
     aSchema = AnalyticsSchema()
     over = Analytics.query.all()
-    uSchema = UserSchema()
     print over
     return render_template('pages/placeholder.home.html')
 
@@ -50,11 +50,97 @@ def about():
 def analytics():
 
     aSchema = AnalyticsSchema()
+    cSchema = CompanySchema()
     #sentJson = reqData['review']
 
     content = "Facebook, you suck!"
+    company_name = "twitter"
+
+    if getCompany(company_name) == "None":
+        cJson = constructCompany(company_name)
+        com = cSchema.load(cJson, session=db_session).data
+        id = com['id']
+        db_session.add(com)
+        db_session.commit()
+        review_count = 1
+        sentJson = constructNewAnalytics(id, content)
+    else:
+        com = getReviewCountForCompany(company_name)
+        id = com['id']
+        count =com['r_cnt']
+
+        existing_ana = getExistingAnalyticsForCompany(id)
+        sentJson = constructRunningAnalytics(existing_ana, count, content)
+
+
+    #print sentJson
+    ana = aSchema.load(sentJson, session=db_session).data
+    db_session.merge(ana)
+    db_session.commit()
+
+    return render_template('pages/placeholder.home.html')
+
+
+def getExistingAnalyticsForCompany(company_id):
+    aSchema = AnalyticsSchema()
+    ana = Analytics.query.filter_by(id=company_id).first()
+    aJson = aSchema.dump(obj=ana).data
+    return aJson
+
+def getCompany(company_name):
+    cSchema = CompanySchema()
+    comp = Company.query.filter_by(name=company_name).first()
+    if comp:
+        cJson = cSchema.dump(obj=comp).data
+        return cJson
+    else:
+        return "NotFound"
+
+def constructRunningAnalytics(existing_ana, current_review_count, content):
 
     sentJson = {}
+
+
+    tone_analyzer = ToneAnalyzerV3(
+        username='1be2c698-56e7-47d4-9944-6e4d81c9b07d',
+        password=WATSON_PASSWORD,
+        version='2016-05-19')
+
+    alchemy_language = AlchemyLanguageV1(api_key='07551e54797d7b593f3595653a7cad5b1803d3a6')
+    sentiment = alchemy_language.sentiment(text=content)
+
+    sentJson['sentiment_score'] = computeRunningAverage( existing_ana['sentiment_score'],sentiment['docSentiment']['score'], current_review_count)
+    if sentJson['sentiment_score'] > 0:
+        sentJson['sentiment_type'] = "positive"
+    else:
+        sentJson['sentiment_type'] = "negative"
+
+
+    sentimentData = tone_analyzer.tone(text=content)
+
+    sentJson['anger'] = computeRunningAverage(existing_ana['anger'],sentimentData["document_tone"]["tone_categories"][0]["tones"][0]["score"], current_review_count)
+    sentJson['disgust'] = computeRunningAverage(existing_ana['disgust'],sentimentData["document_tone"]["tone_categories"][0]["tones"][1]["score"], current_review_count)
+    sentJson['fear'] = computeRunningAverage(existing_ana['fear'],sentimentData["document_tone"]["tone_categories"][0]["tones"][2]["score"], current_review_count)
+    sentJson['joy'] = computeRunningAverage(existing_ana['joy'],sentimentData["document_tone"]["tone_categories"][0]["tones"][1]["score"], current_review_count)
+    sentJson['sadness'] = computeRunningAverage(existing_ana['sadness'],sentimentData["document_tone"]["tone_categories"][0]["tones"][1]["score"], current_review_count)
+
+    sentJson['openness'] = computeRunningAverage(existing_ana['openness'], sentimentData["document_tone"]["tone_categories"][2]["tones"][0]["score"], current_review_count)
+    sentJson['conscientiousness'] = computeRunningAverage(existing_ana['openness'], sentimentData["document_tone"]["tone_categories"][2]["tones"][1]["score"], current_review_count)
+    sentJson['extraversion'] = computeRunningAverage(existing_ana['openness'], sentimentData["document_tone"]["tone_categories"][2]["tones"][2]["score"], current_review_count)
+    sentJson['aggreablesness'] = computeRunningAverage(existing_ana['openness'], sentimentData["document_tone"]["tone_categories"][2]["tones"][3]["score"], current_review_count)
+    sentJson['neuroticism'] = computeRunningAverage(existing_ana['openness'], sentimentData["document_tone"]["tone_categories"][2]["tones"][0]["score"], current_review_count)
+
+    return sentJson
+
+
+def computeRunningAverage(old_average, curr_average , count):
+    new_avg = float((old_average * count + curr_average)/(count + 1))
+    return new_avg
+
+def constructNewAnalytics(id, content):
+
+    sentJson = {}
+
 
     tone_analyzer = ToneAnalyzerV3(
         username='1be2c698-56e7-47d4-9944-6e4d81c9b07d',
@@ -65,6 +151,7 @@ def analytics():
     sentiment = alchemy_language.sentiment(text=content)
 
     sentJson['id'] = str(uuid.uuid1())
+    sentJson['company_id'] = id
     sentJson['sentiment_score'] = sentiment['docSentiment']['score']
     sentJson['sentiment_type'] = sentiment['docSentiment']['type']
 
@@ -81,14 +168,20 @@ def analytics():
     sentJson['extraversion'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][2]["score"]
     sentJson['aggreablesness'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][3]["score"]
     sentJson['neuroticism'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][4]["score"]
+    return sentJson
 
-    #print sentJson
-    ana = aSchema.load(sentJson, session=db_session).data
-    db_session.add(ana)
-    db_session.commit()
+def getReviewCountForCompany(company_name):
+    cSchema = CompanySchema()
+    comp = Company.query.filter_by(name=company_name).first()
+    cJson = cSchema.dump(obj=comp).data
+    return cJson
 
-    return render_template('pages/placeholder.home.html')
-
+def constructCompany(company_name):
+    compJson = {}
+    compJson[u'id'] = str(uuid.uuid1())
+    compJson['name'] = company_name
+    compJson['r_cnt'] = 1
+    return compJson
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
