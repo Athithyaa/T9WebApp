@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 from datetime import timedelta
 import uuid
 from database.db import db_session, init_db
@@ -185,7 +185,9 @@ def companyPage():
     if request.method == 'POST':
         request_ans = request.get_data()
 
-        company_name = "facebook"
+        company_name = request_ans.split("+")[1]
+
+
         cJson = getCompany(company_name)
         comp_id = str(cJson['id'])
         aJson = getExistingAnalyticsForCompany(comp_id)
@@ -194,7 +196,7 @@ def companyPage():
         sentiment_score = aJson['sentiment_score']
         sentiment_type = aJson['sentiment_type']
 
-        return json.dumps({
+        return jsonify({
             'emotional': emotional_tone,
             'social': social_tone,
             'sentiment_score': sentiment_score,
@@ -220,7 +222,7 @@ def buildSocialDict(sJson):
     social_tone['openness'] = sJson['openness']
     social_tone['conscientiousness'] = sJson['conscientiousness']
     social_tone['extraversion'] = sJson['extraversion']
-    social_tone['agreeableness'] = sJson['agreeableness']
+    social_tone['aggreablesness'] = sJson['aggreablesness']
     social_tone['neuroticism'] = sJson['neuroticism']
     return social_tone
 
