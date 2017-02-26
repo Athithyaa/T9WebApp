@@ -45,9 +45,9 @@ def home():
     return render_template('pages/placeholder.home.html')
 
 
-@app.route('/post')
-def post():
-    return render_template('pages/placeholder.post.html',form=PostReviewForm())
+@app.route('/postreview', methods=['GET', 'POST'])
+def postreview():
+    return render_template('pages/placeholder.post.html', form=PostReviewForm())
 
 @app.route('/analytics')
 def analytics():
