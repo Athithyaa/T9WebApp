@@ -9,7 +9,7 @@ from models.Review import Review
 from forms import *
 from watson_developer_cloud import ToneAnalyzerV3
 from watson_developer_cloud import AlchemyLanguageV1
-
+import json
 from ma_schema.AnalyticsSchema import AnalyticsSchema
 from ma_schema.UserSchema import UserSchema
 from ma_schema.CompanySchema import CompanySchema
@@ -17,6 +17,8 @@ from ma_schema.ReviewSchema import ReviewSchema
 import datetime
 import uuid
 from models.Analytics import Analytics
+import httplib, urllib, base64
+
 
 WATSON_USERNAME = '1be2c698-56e7-47d4-9944-6e4d81c9b07d',
 WATSON_PASSWORD = 'sPr4XOsPtNSX'
@@ -61,6 +63,42 @@ def getreviews():
         res['companyname'] = r.company.name
         rJson.append(res)
     return jsonify({"count": len(rJson), "results": rJson})
+
+@app.route('/getnews')
+def getnews():
+
+    company = "uber"
+    search_parameter = company + " workplace harassment"
+    headers = {
+        # Request headers
+        'Ocp-Apim-Subscription-Key': '72b2b2c8ecb14f7c8989803cc06969fe',
+    }
+
+    params = urllib.urlencode({
+        # Request parameters
+        'q': search_parameter,
+        'count': '10',
+        'offset': '0',
+        'mkt': 'en-us',
+        'safeSearch': 'Off',
+    })
+
+    try:
+        conn = httplib.HTTPSConnection('api.cognitive.microsoft.com')
+        conn.request("GET", "/bing/v5.0/news/search?%s" % params, "{body}", headers)
+        response = conn.getresponse()
+        data = json.loads(response.read())
+        for i in range(len(data)):
+            name = str(data['value'][0]['name'])
+            desc = str(data['value'][0]['description'])
+            url = str(data['value'][0]['url'])
+        return data
+
+        conn.close()
+
+    except Exception as e:
+        print("[Errno {0}] {1}".format(e.errno, e.strerror))
+        return "fail"
 
 
 @app.route('/postreview', methods=['GET', 'POST'])
@@ -140,13 +178,53 @@ def updateCompany(id, name, count):
     comJson['r_cnt'] = count
     return comJson
 
-
-@app.route('/analytics')
-def analytics():
+@app.route('/companyPage', methods=['GET','POST'])
+def companyPage():
     if 'email' not in session:
         return render_template('forms/login.html', form=LoginForm())
-    return render_template('pages/placeholder.home.html')
+    if request.method == 'POST':
+        request_ans = request.get_data()
 
+        company_name = request_ans.split("+")[1]
+
+
+        cJson = getCompany(company_name)
+        comp_id = str(cJson['id'])
+        aJson = getExistingAnalyticsForCompany(comp_id)
+        emotional_tone = buildEmotionalDict(aJson)
+        social_tone = buildSocialDict(aJson)
+        sentiment_score = aJson['sentiment_score']
+        sentiment_type = aJson['sentiment_type']
+
+        return jsonify({
+            'emotional': emotional_tone,
+            'social': social_tone,
+            'sentiment_score': sentiment_score,
+            'sentiment_type':sentiment_type
+        })
+
+    return render_template('forms/login.html', form=LoginForm())
+
+
+def buildEmotionalDict(emJson):
+
+    emotional_tone ={}
+    emotional_tone['joy'] = emJson['joy']
+    emotional_tone['fear'] = emJson['fear']
+    emotional_tone['sadness'] = emJson['sadness']
+    emotional_tone['disgust'] = emJson['disgust']
+    emotional_tone['anger'] = emJson['anger']
+    return emotional_tone
+
+def buildSocialDict(sJson):
+
+    social_tone ={}
+    social_tone['openness'] = sJson['openness']
+    social_tone['conscientiousness'] = sJson['conscientiousness']
+    social_tone['extraversion'] = sJson['extraversion']
+    social_tone['aggreablesness'] = sJson['aggreablesness']
+    social_tone['neuroticism'] = sJson['neuroticism']
+    return social_tone
 
 def getExistingAnalyticsForCompany(company_id):
     aSchema = AnalyticsSchema()
