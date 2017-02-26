@@ -45,10 +45,18 @@ def home():
     return render_template('pages/placeholder.home.html')
 
 
+@app.route('/about')
+def about():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
+    return render_template('pages/placeholder.about.html')
+
+
 @app.route("/logout", methods=['GET', 'POST'])
 def logout():
     session.clear()
     return render_template('forms/login.html', form=LoginForm())
+
 
 @app.route("/company", methods=['POST', 'GET'])
 def company():
