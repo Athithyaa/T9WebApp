@@ -4,16 +4,14 @@ import uuid
 from database.db import db_session, init_db
 from models.Company import Company
 from models.User import User
+from models.Analytics import Analytics
 from models.Review import Review
-from ma_schema.UserSchema import UserSchema
 from forms import *
-import os
-import json
 from watson_developer_cloud import ToneAnalyzerV3
 from watson_developer_cloud import AlchemyLanguageV1
-import requests
+
 from ma_schema.AnalyticsSchema import AnalyticsSchema
-#from ma_schema.UserSchema import UserSchema
+from ma_schema.UserSchema import UserSchema
 from ma_schema import CompanySchema
 
 import uuid
