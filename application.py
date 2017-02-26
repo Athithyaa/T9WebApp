@@ -45,7 +45,7 @@ def home():
     return render_template('pages/placeholder.home.html')
 
 
-@app.route("/logout",methods=['GET','POST'])
+@app.route("/logout", methods=['GET', 'POST'])
 def logout():
     session.clear()
     return render_template('forms/login.html', form=LoginForm())
