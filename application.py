@@ -4,7 +4,19 @@ import logging
 from logging import Formatter, FileHandler
 from forms import *
 import os
+import json
+from watson_developer_cloud import ToneAnalyzerV3
+from watson_developer_cloud import AlchemyLanguageV1
+import requests
+from ma_schema.AnalyticsSchema import AnalyticsSchema
+from ma_schema.UserSchema import UserSchema
 
+import uuid
+from models.Analytics import Analytics
+
+WATSON_USERNAME = '1be2c698-56e7-47d4-9944-6e4d81c9b07d',
+WATSON_PASSWORD = 'sPr4XOsPtNSX'
+ALCHEMY_API_KEY = '07551e54797d7b593f3595653a7cad5b1803d3a6'
 app = Flask(__name__)
 app.secret_key = 's3cr3t'
 
@@ -16,12 +28,59 @@ def shutdown_session(exception=None):
 
 @app.route('/')
 def home():
+    aSchema = AnalyticsSchema()
+    over = Analytics.query.all()
+    uSchema = UserSchema()
+    print over
     return render_template('pages/placeholder.home.html')
 
 
 @app.route('/about')
 def about():
     return render_template('pages/placeholder.about.html')
+
+@app.route('/analytics')
+def analytics():
+
+    aSchema = AnalyticsSchema()
+    #sentJson = reqData['review']
+
+    content = "Facebook, you suck!"
+
+    sentJson = {}
+
+    tone_analyzer = ToneAnalyzerV3(
+        username='1be2c698-56e7-47d4-9944-6e4d81c9b07d',
+        password=WATSON_PASSWORD,
+        version='2016-05-19')
+
+    alchemy_language = AlchemyLanguageV1(api_key='07551e54797d7b593f3595653a7cad5b1803d3a6')
+    sentiment = alchemy_language.sentiment(text=content)
+
+    sentJson['id'] = str(uuid.uuid1())
+    sentJson['sentiment_score'] = sentiment['docSentiment']['score']
+    sentJson['sentiment_type'] = sentiment['docSentiment']['type']
+
+    sentimentData = tone_analyzer.tone(text=content)
+
+    sentJson['anger'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][0]["score"]
+    sentJson['disgust'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][1]["score"]
+    sentJson['fear'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][2]["score"]
+    sentJson['joy'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][3]["score"]
+    sentJson['sadness'] = sentimentData["document_tone"]["tone_categories"][0]["tones"][4]["score"]
+
+    sentJson['openness'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][0]["score"]
+    sentJson['conscientiousness'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][1]["score"]
+    sentJson['extraversion'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][2]["score"]
+    sentJson['aggreablesness'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][3]["score"]
+    sentJson['neuroticism'] = sentimentData["document_tone"]["tone_categories"][2]["tones"][4]["score"]
+
+    #print sentJson
+    ana = aSchema.load(sentJson, session=db_session).data
+    db_session.add(ana)
+    db_session.commit()
+
+    return render_template('pages/placeholder.home.html')
 
 
 @app.route('/login')
