@@ -45,12 +45,24 @@ def home():
     return render_template('pages/placeholder.home.html')
 
 
+@app.route("/company", methods=['POST', 'GET'])
+def company():
+    cName = request.args.get("name")
+    return render_template('pages/placeholder.company.html', cName=cName)
+
+
 @app.route('/getreviews', methods=['GET'])
 def getreviews():
     if 'email' not in session:
         return render_template('forms/login.html', form=LoginForm())
     rSchema = ReviewSchema()
-    return rSchema.dumps(Review.query.all()).data
+    reviews = Review.query.order_by(Review.date.desc())
+    rJson = []
+    for r in reviews:
+        res = rSchema.dump(r).data
+        res['companyname'] = r.company.name
+        rJson.append(res)
+    return jsonify({"count": len(rJson), "results": rJson})
 
 @app.route('/getnews')
 def getnews():
