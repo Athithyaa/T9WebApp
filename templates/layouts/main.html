@@ -44,7 +44,7 @@
   <div id="wrap">
 
     <!-- Fixed navbar -->
-    <div class="navbar navbar-default navbar-fixed-top">
+    <div class="navbar navbar-default navbar-fixed-top w3-text-theme">
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -56,8 +56,8 @@
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li {% if request.endpoint == 'home' %} class="active" {% endif %}><a href="{{ url_for('home') }}">Home</a></li>
-            <li {% if request.endpoint == 'post' %} class="active" {% endif %}><a href="{{ url_for('postreview') }}">Post</a></li>
+            <li {% if request.endpoint =='home' %} class="active" {% endif %}><a href="{{ url_for('home') }}">Home</a></li>
+            <li {% if request.endpoint =='post' %} class="active" {% endif %}><a href="{{ url_for('postreview') }}">Post</a></li>
             <!--<li class="dropdown">
               <a class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
               <ul class="dropdown-menu">

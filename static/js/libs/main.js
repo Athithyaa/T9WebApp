@@ -81,15 +81,14 @@ jQuery(document).ready(function($){
                 var circle = d3.select("#viz3")
                     .append("circle")
                     .attr("cx", 30)
-                    .attr("cy", 30)
-                    .attr("r", data["sentiment_score"]*20);
+                    .attr("cy", 30);
 
                 if(data["sentiment_type"] == "positive"){
                     circle.style("fill","green")
+                        .attr("r", data["sentiment_score"]*20)
                         .on("mouseover", function (d) {
                             d3.select(this)
-                                .attr("r", data["sentiment_score"]*20)
-                                .style("fill", "green");
+                                .attr("r", data["sentiment_score"]*21);
                             toolTipDiv.transition()
                                 .duration(2000)
                                 .style("opacity", 0.9)
@@ -100,7 +99,7 @@ jQuery(document).ready(function($){
                         })
                         .on("mouseout", function (d) {
                             d3.select(this)
-                                .attr("r", data["sentiment_score"]*21)
+                                .attr("r", data["sentiment_score"]*20)
                                 .style("fill", "green");
                             toolTipDiv.transition()
                                 .duration(2000)
@@ -108,7 +107,28 @@ jQuery(document).ready(function($){
                         })
 
                 }else{
+                    console.log("negative")
                     circle.style("fill","red")
+                        .attr("r", data["sentiment_score"]*-20)
+                        .on("mouseover", function (d) {
+                            d3.select(this)
+                                .attr("r", data["sentiment_score"]*-21);
+                            toolTipDiv.transition()
+                                .duration(2000)
+                                .style("opacity", 0.9)
+                                .style("left", (d3.event.pageX ) + "px")
+                                .style("top", (d3.event.pageY ) + "px");
+
+                            toolTipDiv.html("<p>(Sentiment: " + data["sentiment_type"] + ", " + (data["sentiment_score"]*100) + "% )</p>");
+                        })
+                        .on("mouseout", function (d) {
+                            d3.select(this)
+                                .attr("r", data["sentiment_score"]*-20)
+                                .style("fill", "red");
+                            toolTipDiv.transition()
+                                .duration(2000)
+                                .style("opacity", 0);
+                        })
 
                 }
 
