@@ -38,15 +38,26 @@ def shutdown_session(exception=None):
 
 @app.route('/')
 def home():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
     return render_template('pages/placeholder.home.html')
+
+
+@app.route('/getreviews', methods=['GET'])
+def getreviews():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
+    rSchema = ReviewSchema()
+    return rSchema.dumps(Review.query.all()).data
 
 
 @app.route('/postreview', methods=['GET', 'POST'])
 def postreview():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
     if request.method == 'POST':
         company_name = request.form['company']
         content = request.form['experience']
-
         aSchema = AnalyticsSchema()
         cSchema = CompanySchema()
         rSchema = ReviewSchema()
@@ -85,12 +96,8 @@ def postreview():
         sentJson['id'] = existing_ana['id']
         ana = aSchema.load(sentJson, session=db_session).data
         ana.company_id = id
-
-
         db_session.merge(ana)
         db_session.commit()
-
-
 
     return render_template('pages/placeholder.post.html', form=PostReviewForm())
 
@@ -104,6 +111,8 @@ def updateCompany(id, name, count):
 
 @app.route('/analytics')
 def analytics():
+    if 'email' not in session:
+        return render_template('forms/login.html', form=LoginForm())
     return render_template('pages/placeholder.home.html')
 
 
@@ -220,7 +229,10 @@ def login():
         email = request.form['email']
         password = request.form['password']
         lgn = User.query.filter_by(email=email.lower()).first()
+        if lgn is None:
+            return render_template('forms/login.html', form=form)
         if lgn.password == password:
+            session["email"] = email
             return render_template('pages/placeholder.home.html')
         else:
             return render_template('forms/login.html', form=form)
@@ -244,6 +256,7 @@ def register():
         user = uSchema.load(u, session=db_session).data
         db_session.add(user)
         db_session.commit()
+        session["email"] = email
         return render_template('pages/placeholder.home.html')
     else:
         form = RegisterForm(request.form)
@@ -255,7 +268,7 @@ def register():
 
 @app.errorhandler(500)
 def internal_error(error):
-    #db_session.rollback()
+    db_session.rollback()
     return render_template('errors/500.html'), 500
 
 

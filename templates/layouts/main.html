@@ -17,6 +17,9 @@
 <link type="text/css" rel="stylesheet" href="/static/css/main.css" />
 <link type="text/css" rel="stylesheet" href="/static/css/main.responsive.css" />
 <link type="text/css" rel="stylesheet" href="/static/css/main.quickfix.css" />
+<link type="text/css" rel="stylesheet" href="/static/css/style.css" />
+<link type="text/css" rel="stylesheet" href="/static/css/reset.css" />
+
 <!-- /styles -->
 
 <!-- favicons -->
@@ -67,10 +70,12 @@
               </ul>
             </li>-->
           </ul>
+          {% if 'email' not in session %}
           <ul class="nav navbar-nav pull-right">
             <li><a href="{{ url_for('register') }}">Signup</a></li>
             <li><a href="{{ url_for('login') }}">Login</a></li>
           </ul>
+           {% endif %}
         </div><!--/.nav-collapse -->
       </div>
     </div>
@@ -107,6 +112,8 @@
   <script type="text/javascript" src="/static/js/libs/bootstrap-3.1.1.min.js" defer></script>
   <script type="text/javascript" src="/static/js/plugins.js" defer></script>
   <script type="text/javascript" src="/static/js/script.js" defer></script>
+  <script type="text/javascript" src="/static/js/libs/modernizr.js" defer></script>
+  <script type="text/javascript" src="/static/js/libs/main.js" defer></script>
 
 </body>
 </html>
