@@ -12,6 +12,7 @@ class Review(Base):
     content = Column(String(100))
     user = relationship("User", foreign_keys="Review.user_id")
     company = relationship("Company", foreign_keys="Review.company_id")
+    date = Column(String(100))
 
     def __repr__(self):
         return "<Review:" + self.id + " " + self.content + ">"

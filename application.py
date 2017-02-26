@@ -14,7 +14,7 @@ from ma_schema.AnalyticsSchema import AnalyticsSchema
 from ma_schema.UserSchema import UserSchema
 from ma_schema.CompanySchema import CompanySchema
 from ma_schema.ReviewSchema import ReviewSchema
-
+import datetime
 import uuid
 from models.Analytics import Analytics
 
@@ -85,6 +85,7 @@ def postreview():
             name = comJson['name']
             existing_ana = getExistingAnalyticsForCompany(str(id))
             sentJson = constructRunningAnalytics(existing_ana, count, content)
+            sentJson['id'] = existing_ana['id']
             count +=1
             cJson = updateCompany(id, name, count)
             com = cSchema.load(cJson, session=db_session).data
@@ -96,10 +97,11 @@ def postreview():
         rev = rSchema.load(rJson, session=db_session).data
         rev.company_id = rJson['company_id']
         rev.user_id = rJson['user_id']
+        rev.date = str(datetime.datetime.now())
         db_session.add(rev)
 
         #print sentJson
-        sentJson['id'] = existing_ana['id']
+
         ana = aSchema.load(sentJson, session=db_session).data
         ana.company_id = id
         db_session.merge(ana)
@@ -172,7 +174,7 @@ def constructRunningAnalytics(existing_ana, current_review_count, content):
     elif sentJson['sentiment_score'] < 0:
         sentJson['sentiment_type'] = "negative"
     else:
-        sentJson['sentiment_type'] = "nuetral"
+        sentJson['sentiment_type'] = "neutral"
 
 
     sentimentData = tone_analyzer.tone(text=content)
