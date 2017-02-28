@@ -7,7 +7,7 @@ A news feed shows all the ratings and experiences shared recently. Users can sel
 
 ## Inspiration
 
-A few days back, (https://www.susanjfowler.com/blog/2017/2/19/reflecting-on-one-very-strange-year-at-uber)[Susan Fowler] shared a horrifying experience regarding workplace harassment at Uber. Susan ended up quitting Uber. Who would have thought that Uber would have such a poor workplace environment for women?
+A few days back,[Susan Fowler] (https://www.susanjfowler.com/blog/2017/2/19/reflecting-on-one-very-strange-year-at-uber) shared a horrifying experience regarding workplace harassment at Uber. Susan ended up quitting Uber. Who would have thought that Uber would have such a poor workplace environment for women?
 
 Women would be greatly benefited by a platform where they could rate and share their workplace harassment experiences -- so that other women could benefit from that and not join a company which has a poor culture towards women.
 
