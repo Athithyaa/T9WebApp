@@ -33,4 +33,3 @@ pip install -r requirements.txt
 
 
 The site is hosted live at http://ec2-50-112-201-77.us-west-2.compute.amazonaws.com:5000/.
-(PS: The site is down currently, but will be back online real soon!)
